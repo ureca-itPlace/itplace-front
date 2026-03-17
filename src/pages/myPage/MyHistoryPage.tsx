@@ -40,8 +40,7 @@ export default function MyHistoryPage() {
 
   // 검색/필터/페이지네이션 상태
   const [keyword, setKeyword] = useState('');
-  const [debouncedKeyword, setDebouncedKeyword] = useState(''); // 디바운싱용
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(0); // 0-based
   const [size] = useState(5);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -56,12 +55,6 @@ export default function MyHistoryPage() {
   const [loading, setLoading] = useState(false);
 
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
-
-  // ✅ 디바운싱 로직
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedKeyword(keyword), 500);
-    return () => clearTimeout(timer);
-  }, [keyword]);
 
   // ✅ 혜택 사용 이력 API 호출 (페이지/필터 변화 시 재호출)
   useEffect(() => {
@@ -91,7 +84,7 @@ export default function MyHistoryPage() {
         console.log('시간 포함 날짜 파라미터:', { startParam, endParam });
         const res = await api.get('/api/v1/membership-history', {
           params: {
-            keyword: debouncedKeyword || undefined,
+            keyword: keyword || undefined,
             startDate: startParam,
             endDate: endParam,
             page,
@@ -120,7 +113,7 @@ export default function MyHistoryPage() {
     };
 
     fetchHistory();
-  }, [debouncedKeyword, startDate, endDate, page, size, membershipGrade]);
+  }, [keyword, startDate, endDate, page, size, membershipGrade]);
 
   // ✅ 이번 달 총 할인 금액 API 호출 (mount 시 1회)
   useEffect(() => {
@@ -145,10 +138,10 @@ export default function MyHistoryPage() {
     fetchSummary();
   }, [membershipGrade, dispatch]);
 
-  // ✅ debouncedKeyword, startDate, endDate가 바뀔 때마다 페이지를 0으로 초기화
+  // 🔥 keyword, startDate, endDate가 바뀔 때마다 페이지를 0으로 초기화
   useEffect(() => {
     setPage(0);
-  }, [debouncedKeyword, startDate, endDate]);
+  }, [keyword, startDate, endDate]);
 
   return (
     <div className="flex flex-row gap-[28px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
